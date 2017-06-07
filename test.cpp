@@ -1,3 +1,5 @@
+#include <string>
+#include <fstream>
 #include "max-triangle.hpp"
 
 bool test_anchor(){
@@ -38,9 +40,65 @@ bool test_anchor(){
     return true;
 }
 
+bool test_max() {
+    std::vector <std::vector <mpq_class> > polygons;
+
+    unsigned int i;
+    struct state s1,s2;
+    mpq_class ax,ay,bx,by,cx,cy;
+    mpq_class z1,z2;
+
+    std::string line, entry;
+    std::ifstream infile("test-polygons");
+
+    while (std::getline(infile, line)) {
+	std::stringstream line_stream(line);
+	polygons.push_back(std::vector <mpq_class>());
+	while (line_stream >> entry) {
+	    if (!entry.empty()) polygons.back().push_back(mpq_class(entry));
+	}
+    }
+
+    for (i = 0; i < polygons.size(); i++) {
+    //for (i = 28; i < 29; i++) {
+	s1 = maximum_triangle(polygons[i]);
+	if (s1.status != status_ok) {
+	    std::cout << i << " ";
+	    print_status(s1.status);
+	    return false;
+	}
+	s2 = naive_maximum_triangle(polygons[i]);
+	ax = polygons[i][2*s1.ai+0];
+	ay = polygons[i][2*s1.ai+1];
+	bx = polygons[i][2*s1.bi+0];
+	by = polygons[i][2*s1.bi+1];
+	cx = polygons[i][2*s1.ci+0];
+	cy = polygons[i][2*s1.ci+1];
+	z1 = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
+    	ax = polygons[i][2*s2.ai+0];
+	ay = polygons[i][2*s2.ai+1];
+	bx = polygons[i][2*s2.bi+0];
+	by = polygons[i][2*s2.bi+1];
+	cx = polygons[i][2*s2.ci+0];
+	cy = polygons[i][2*s2.ci+1];
+	z2 = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
+	std::cout << z1 << " = " << z2 << std::endl;
+	if (z1 != z2) return false;
+    }
+    return true;
+}
+
 int main(int argc, char *argv[]){
     if (test_anchor()) std::cout << "anchor triangle finding unit test PASSED" << std::endl;
     else std::cout << "anchor triangle finding unit test FAILED" << std::endl;
+    if (test_max()) std::cout << "maximum triangle finding unit test PASSED" << std::endl;
+    else std::cout << "maximum triangle finding unit test FAILED" << std::endl;
+    
+    /*std::vector <std::vector <mpq_class> > polygons = {{3040, 4460, 2506, 4423, 759, 2927, 1000, 1000, 1213, 691, 3383, 413, 5000, 1000, 4752, 4262, 4745, 4322},{707, 707, 258, 965, -258, 965, -707, 707, -965, 258, -965, -258, -707, -707, -258, -965, 258, -965, 707, -707, 965, -258, 965, 258}};
+
+    struct state my_state = maximum_triangle(polygons[0]);
+    if (my_state.status != status_ok) std::cout << "status not OK" << std::endl;
+    else std::cout << my_state.ai << "\t" << my_state.bi << "\t" << my_state.ci << std::endl;*/
     return 0;
 }
 
