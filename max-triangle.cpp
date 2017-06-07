@@ -147,23 +147,26 @@ struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq
 
 struct state maximum_triangle(std::vector<mpq_class> polygon){
 
-    struct state my_state = anchored_triangle(polygon,1,0);
-    my_state.nx = 1; my_state.ny = 0;
+    struct state my_state;
     int ret[3] = {0,0,0};
     unsigned int sz = polygon.size()/2;
     bool max_at_vert=false;
     unsigned int iter = 0;
     unsigned int maxiter = sz*10;
+    int ai_start;
 
-    if (my_state.status != status_ok) {return my_state;}
-
-    int ai_start = my_state.ai;
     mpq_class ax,ay,bx,by,cx,cy;
     mpq_class pax,pay,pbx,pby,pcx,pcy;
     mpq_class eax,eay,ebx,eby,ecx,ecy;
     mpq_class t1,t2,t3;
     mpq_class ee,fb,fc,tq;
     mpq_class area;
+
+    my_state = anchored_triangle(polygon,polygon[1]-polygon[3],polygon[2]-polygon[0]);
+    my_state.nx = polygon[1]-polygon[3];
+    my_state.ny = polygon[2]-polygon[0];
+    if (my_state.status != status_ok) {return my_state;}
+    ai_start = my_state.ai = 0;
 
     ax = getmod(polygon, 2*my_state.ai+0);
     ay = getmod(polygon, 2*my_state.ai+1);
