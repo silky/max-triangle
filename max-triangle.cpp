@@ -161,12 +161,36 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
     mpq_class t1,t2,t3;
     mpq_class ee,fb,fc,tq;
     mpq_class area;
+    mpq_class amax = -1;
 
-    my_state = anchored_triangle(polygon,polygon[1]-polygon[3],polygon[2]-polygon[0]);
+    /*my_state = anchored_triangle(polygon,polygon[1]-polygon[3],polygon[2]-polygon[0]);
     my_state.nx = polygon[1]-polygon[3];
     my_state.ny = polygon[2]-polygon[0];
     if (my_state.status != status_ok) {return my_state;}
-    ai_start = my_state.ai = 0;
+    ai_start = my_state.ai = 0;*/
+
+    ////////////////////////////
+    if (polygon.size() < 3) { my_state.status = status_no_interior; return my_state; }
+    if (!is_convex(polygon)) { my_state.status = status_not_convex; return my_state; }
+    my_state.status = status_ok;
+
+    my_state.bi = 1;
+    my_state.ci = my_state.bi+1;
+    my_state.ai = my_state.bi+2;
+    my_state.bt = 0;
+    my_state.ct = 0;
+    area = (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1));
+    amax = area;
+    while (true){
+	if (area <= (getmod(polygon, 2*my_state.ci+2)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+3)-getmod(polygon, 2*my_state.bi+1))) my_state.ci++;
+	else if (area <= (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+3)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+2)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1))) my_state.ai++;
+	else break;
+	area = (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1));
+    }
+
+    ai_start = my_state.ai;
+    
+    /////////////////////////////
 
     ax = getmod(polygon, 2*my_state.ai+0);
     ay = getmod(polygon, 2*my_state.ai+1);
@@ -187,15 +211,24 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
     cx += my_state.ct*ecx;
     cy += my_state.ct*ecy;
 
-    //mpq_class amax = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
-    //ret[0] = my_state.ai; ret[1] = my_state.bi; ret[2] = my_state.ci;
-    mpq_class amax = -1;
-
+    my_state.nx = cy - by;
+    my_state.ny = bx - cx;
 
     while (my_state.ai <= ai_start + (int) sz) {
 
 	if (iter++ > maxiter) {my_state.status=status_maxiter_exceeded; return my_state;}
 
+	area = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
+	if ( (area > amax) || ( (area == amax) && !max_at_vert ) ) {
+	    amax = area;
+	    if (my_state.ct == 0 && my_state.bt == 0) {
+		max_at_vert = true;
+		ret[0] = (my_state.ai+sz)%sz;
+		ret[1] = (my_state.bi+sz)%sz;
+		ret[2] = (my_state.ci+sz)%sz;
+	    } else max_at_vert = false;
+	}
+	
 	if (my_state.nx*eax + my_state.ny*eay == 0) { //support line coincides with forward edge at A, advance A
 	    my_state.ai += 1;
 	    ax = getmod(polygon, 2*my_state.ai+0);
@@ -224,17 +257,7 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
 	    continue;
 	}
-	area = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
-	if ( (area > amax) || ( (area == amax) && !max_at_vert ) ) {
-	    amax = area;
-	    if (my_state.ct == 0 && my_state.bt == 0) {
-		max_at_vert = true;
-		ret[0] = (my_state.ai+sz)%sz;
-		ret[1] = (my_state.bi+sz)%sz;
-		ret[2] = (my_state.ci+sz)%sz;
-	    } else max_at_vert = false;
-	}
-	
+
 #ifdef DEBUG
 	std::cout << my_state.ai << "\t" << my_state.bi << "\t" << my_state.ci << "\t";
         std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << my_state.bt.get_d() << "\t";
