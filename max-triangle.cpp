@@ -30,6 +30,133 @@ namespace InscribedTriangle {
 
     }
 
+
+    void anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq_class ny, unsigned int *reti, mpq_class *rett, state_flag *status){
+
+	mpq_class minx,maxx,x;
+	unsigned int ai,bi,ci;
+	mpq_class ax,ay,bx,by,cx,cy;
+	mpq_class ebx,eby,ecx,ecy;
+	mpq_class dbt, dct, t0, tq;
+	mpq_class ee, neb, nec;
+	mpq_class bt,ct;
+	unsigned int i;
+	unsigned int sz = polygon.size()/2;
+
+	if (polygon.size() < 3) { *status = status_no_interior; return; }
+	if (!is_convex(polygon)) { *status = status_not_convex; return; }
+	*status = status_ok;
+
+	maxx = minx = nx*polygon[0]+ny*polygon[1];
+	ai = ci = 0;
+	for (i = 1; i < sz; i++) {
+	    x = nx*polygon[2*i+0]+ny*polygon[2*i+1];
+	    if (x>maxx) { maxx=x; ci=i; }
+	    if (x<minx) { minx=x; ai=i; }
+	}
+	ci+=sz;
+	bi=ci-1;
+	bt=1;
+	ct=0;
+
+	ax = polygon[(2*ai+0)%(2*sz)];
+	ay = polygon[(2*ai+1)%(2*sz)];
+	cx = polygon[(2*ci+0)%(2*sz)];
+	cy = polygon[(2*ci+1)%(2*sz)];
+	bx = cx;
+	by = cy;
+	ebx = polygon[(2*bi+2)%(2*sz)] - polygon[(2*bi+0)%(2*sz)];
+	eby = polygon[(2*bi+3)%(2*sz)] - polygon[(2*bi+1)%(2*sz)];
+	ecx = polygon[(2*ci+2)%(2*sz)] - polygon[(2*ci+0)%(2*sz)];
+	ecy = polygon[(2*ci+3)%(2*sz)] - polygon[(2*ci+1)%(2*sz)];
+
+	while(true) {
+	    neb = ebx*nx + eby*ny; 
+	    nec = ecx*nx + ecy*ny;
+	    ee = ebx*ecy - ecx*eby;
+	    if (neb < 0) { *status = status_runtime_error; return; }
+	    if (nec > 0) { *status = status_runtime_error; return; }
+
+	    if (neb == 0) { //eb.n = 0, advance b
+		bi -= 1; 
+		bt = 1;
+		bx = polygon[(2*bi+2)%(2*sz)];
+		by = polygon[(2*bi+3)%(2*sz)];
+		ebx = polygon[(2*bi+2)%(2*sz)] - polygon[(2*bi+0)%(2*sz)];
+		eby = polygon[(2*bi+3)%(2*sz)] - polygon[(2*bi+1)%(2*sz)];
+		continue;
+	    }
+	    if (nec == 0) { //ec.n = 0, advance c
+		ci += 1; 
+		ct = 0;
+		cx = polygon[(2*ci+0)%(2*sz)];
+		cy = polygon[(2*ci+1)%(2*sz)];
+		ecx = polygon[(2*ci+2)%(2*sz)] - polygon[(2*ci+0)%(2*sz)];
+		ecy = polygon[(2*ci+3)%(2*sz)] - polygon[(2*ci+1)%(2*sz)];
+		continue;
+	    }
+	    if (ee <= 0) { //eb and ec are parallel or converging, any advancement reduces area, so done
+		reti[0] = ai; reti[1] = bi; reti[2] = ci;
+		rett[0] = bt; rett[1] = ct;
+		return;
+	    }
+
+	    //dbt  = nx*eby*ecx*(ax-bx) + nx*ecy*ebx*(2*bx-ax-cx);
+	    //dbt += ny*ebx*ecy*(by-ay) + ny*ecx*eby*(ay+cy-2*by);
+	    //dbt /= 2*(ebx*ecy - ecx*eby)*(ebx*nx + eby*ny);
+
+	    //dct  = nx*ecy*ebx*(ax-cx) + nx*eby*ecx*(2*cx-ax-bx);
+	    //dct += ny*ecx*eby*(cy-ay) + ny*ebx*ecy*(ay+by-2*cy);
+	    //dct /= 2*(ebx*ecy - ecx*eby)*(ecx*nx + ecy*ny);
+	    
+	    tq  = nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
+	    tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+
+	    dbt = -tq/(2*neb*ee);
+	    dct = tq/(2*nec*ee);
+
+	    //std::cout << bi << ", " << ci << ", " << bt << ", " << ct << ", " << dbt << ", " << dct << ", " << bx << ", " << by << ", " << cx << ", " << cy << std::endl;
+
+	    if (dbt <= 0 || dct <= 0) {
+		reti[0] = ai; reti[1] = bi; reti[2] = ci;
+		rett[0] = bt; rett[1] = ct;
+		return;
+	    }
+
+	    if (dbt < bt && dct < 1 - ct) {
+		bt -= dbt;
+		ct += dct;
+		reti[0] = ai; reti[1] = bi; reti[2] = ci;
+		rett[0] = bt; rett[1] = ct;
+		return;
+	    }
+
+	    if ( (1 - ct)*dbt < bt*dct ) {
+		t0 = (1 - ct)*dbt/dct;
+		bx -= t0*ebx;
+		by -= t0*eby;
+		bt -= t0;
+		ci += 1; 
+		ct = 0;
+		cx = polygon[(2*ci+0)%(2*sz)];
+		cy = polygon[(2*ci+1)%(2*sz)];
+		ecx = polygon[(2*ci+2)%(2*sz)] - polygon[(2*ci+0)%(2*sz)];
+		ecy = polygon[(2*ci+3)%(2*sz)] - polygon[(2*ci+1)%(2*sz)];
+	    } else {
+		t0 = bt*dct/dbt;
+		cx += t0*ecx;
+		cy += t0*ecy;
+		ct += t0;
+		bi -= 1; 
+		bt = 1;
+		bx = polygon[(2*bi+2)%(2*sz)];
+		by = polygon[(2*bi+3)%(2*sz)];
+		ebx = polygon[(2*bi+2)%(2*sz)] - polygon[(2*bi+0)%(2*sz)];
+		eby = polygon[(2*bi+3)%(2*sz)] - polygon[(2*bi+1)%(2*sz)];
+	    }
+	}
+    }
+
     void maximum_triangle(std::vector<mpq_class> polygon, unsigned int *ret, state_flag *status){
 
 	mpq_class nx, ny;
@@ -40,6 +167,7 @@ namespace InscribedTriangle {
 	unsigned int iter = 0;
 	unsigned int maxiter = sz*10;
 	unsigned int ai_start;
+	mpq_class t_init[2];
 
 	mpq_class ax,ay,bx,by,cx,cy;
 	mpq_class pax,pay,pbx,pby,pcx,pcy;
@@ -49,7 +177,7 @@ namespace InscribedTriangle {
 	mpq_class area;
 	mpq_class amax = -1;
 
-	if (polygon.size() < 3) { *status = status_no_interior; return;  }
+	/*if (polygon.size() < 3) { *status = status_no_interior; return;  }
 	if (!is_convex(polygon)) { *status = status_not_convex; return;  }
 	*status = status_ok;
 
@@ -65,7 +193,14 @@ namespace InscribedTriangle {
 	    else if (area <= (polygon[(2*ci+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+3)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+2)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)])) ai++;
 	    else break;
 	    area = (polygon[(2*ci+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]);
-	}
+	}*/
+
+	ai = ret[0];
+	eax = polygon[(2*ai+2)%(2*sz)] - polygon[(2*ai+0)%(2*sz)];
+	eay = polygon[(2*ai+3)%(2*sz)] - polygon[(2*ai+1)%(2*sz)];
+	anchored_triangle(polygon, -eay, eax, ret, t_init, status);
+	ai = ret[0]; bi = ret[1]; ci = ret[2];
+	bt = t_init[0]; ct = t_init[1];
 
 	ai_start = ai;
 	
