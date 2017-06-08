@@ -1,7 +1,8 @@
 #include <iomanip>
 #include "max-triangle.hpp"
 
-#define getmod(arg1,arg2) arg1[(((arg2)+(arg1.size()))%(arg1.size()))]
+//#define getmod(arg1,arg2) arg1[(((arg2)+(arg1.size()))%(arg1.size()))]
+//#define getmod(arg1,arg2) arg1[((arg2)%(arg1.size()))]
 
 void print_status(state_flag status) {
     switch(status) {
@@ -18,11 +19,12 @@ bool is_convex(std::vector<mpq_class> polygon) {
     //check if polygon is a strictly convex polygon with vertices listed in CCW order
 
     unsigned int i;
+    unsigned int sz = polygon.size()/2;
     mpq_class x;
 
     for (i = 0; i<polygon.size(); i++) {
-	x  = (getmod(polygon,2*i+2) - getmod(polygon,2*i+0))*(getmod(polygon,2*i+5) - getmod(polygon,2*i+1));
-	x -= (getmod(polygon,2*i+4) - getmod(polygon,2*i+0))*(getmod(polygon,2*i+3) - getmod(polygon,2*i+1));
+	x  = (polygon[(2*i+2)%(2*sz)] - polygon[(2*i+0)%(2*sz)])*(polygon[(2*i+5)%(2*sz)] - polygon[(2*i+1)%(2*sz)]);
+	x -= (polygon[(2*i+4)%(2*sz)] - polygon[(2*i+0)%(2*sz)])*(polygon[(2*i+3)%(2*sz)] - polygon[(2*i+1)%(2*sz)]);
 	if (x <= 0) return false;
     }
 
@@ -30,7 +32,7 @@ bool is_convex(std::vector<mpq_class> polygon) {
 
 }
 
-struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq_class ny){
+/*struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq_class ny){
 
     struct state my_state;
     mpq_class minx,maxx,x;
@@ -55,16 +57,16 @@ struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq
     my_state.bt=1;
     my_state.ct=0;
 
-    ax = getmod(polygon, 2*my_state.ai+0);
-    ay = getmod(polygon, 2*my_state.ai+1);
-    cx = getmod(polygon, 2*my_state.ci+0);
-    cy = getmod(polygon, 2*my_state.ci+1);
+    ax = polygon[(2*my_state.ai+0)%(2*sz)];
+    ay = polygon[(2*my_state.ai+1)%(2*sz)];
+    cx = polygon[(2*my_state.ci+0)%(2*sz)];
+    cy = polygon[(2*my_state.ci+1)%(2*sz)];
     bx = cx;
     by = cy;
-    ebx = getmod(polygon, 2*my_state.bi+2) - getmod(polygon, 2*my_state.bi+0);
-    eby = getmod(polygon, 2*my_state.bi+3) - getmod(polygon, 2*my_state.bi+1);
-    ecx = getmod(polygon, 2*my_state.ci+2) - getmod(polygon, 2*my_state.ci+0);
-    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
+    ebx = polygon[(2*my_state.bi+2)%(2*sz)] - polygon[(2*my_state.bi+0)%(2*sz)];
+    eby = polygon[(2*my_state.bi+3)%(2*sz)] - polygon[(2*my_state.bi+1)%(2*sz)];
+    ecx = polygon[(2*my_state.ci+2)%(2*sz)] - polygon[(2*my_state.ci+0)%(2*sz)];
+    ecy = polygon[(2*my_state.ci+3)%(2*sz)] - polygon[(2*my_state.ci+1)%(2*sz)];
 
     while(true) {
 	neb = ebx*nx + eby*ny; 
@@ -76,19 +78,19 @@ struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq
 	if (neb == 0) { //eb.n = 0, advance b
 	    my_state.bi -= 1; 
 	    my_state.bt = 1;
-	    bx = getmod(polygon, 2*my_state.bi+2);
-	    by = getmod(polygon, 2*my_state.bi+3);
-	    ebx = getmod(polygon, 2*my_state.bi+2) - getmod(polygon, 2*my_state.bi+0);
-	    eby = getmod(polygon, 2*my_state.bi+3) - getmod(polygon, 2*my_state.bi+1);
+	    bx = polygon[(2*my_state.bi+2)%(2*sz)];
+	    by = polygon[(2*my_state.bi+3)%(2*sz)];
+	    ebx = polygon[(2*my_state.bi+2)%(2*sz)] - polygon[(2*my_state.bi+0)%(2*sz)];
+	    eby = polygon[(2*my_state.bi+3)%(2*sz)] - polygon[(2*my_state.bi+1)%(2*sz)];
 	    continue;
 	}
 	if (nec == 0) { //ec.n = 0, advance c
 	    my_state.ci += 1; 
 	    my_state.ct = 0;
-	    cx = getmod(polygon, 2*my_state.ci+0);
-	    cy = getmod(polygon, 2*my_state.ci+1);
-	    ecx = getmod(polygon, 2*my_state.ci+2) - getmod(polygon, 2*my_state.ci+0);
-	    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
+	    cx = polygon[(2*my_state.ci+0)%(2*sz)];
+	    cy = polygon[(2*my_state.ci+1)%(2*sz)];
+	    ecx = polygon[(2*my_state.ci+2)%(2*sz)] - polygon[(2*my_state.ci+0)%(2*sz)];
+	    ecy = polygon[(2*my_state.ci+3)%(2*sz)] - polygon[(2*my_state.ci+1)%(2*sz)];
 	    continue;
 	}
 	if (ee <= 0) { //eb and ec are parallel or converging, any advancement reduces area, so done
@@ -126,10 +128,10 @@ struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq
 	    my_state.bt -= t0;
 	    my_state.ci += 1; 
 	    my_state.ct = 0;
-	    cx = getmod(polygon, 2*my_state.ci+0);
-	    cy = getmod(polygon, 2*my_state.ci+1);
-	    ecx = getmod(polygon, 2*my_state.ci+2) - getmod(polygon, 2*my_state.ci+0);
-	    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
+	    cx = polygon[(2*my_state.ci+0)%(2*sz)];
+	    cy = polygon[(2*my_state.ci+1)%(2*sz)];
+	    ecx = polygon[(2*my_state.ci+2)%(2*sz)] - polygon[(2*my_state.ci+0)%(2*sz)];
+	    ecy = polygon[(2*my_state.ci+3)%(2*sz)] - polygon[(2*my_state.ci+1)%(2*sz)];
 	} else {
 	    t0 = my_state.bt*dct/dbt;
 	    cx += t0*ecx;
@@ -137,23 +139,26 @@ struct state anchored_triangle(std::vector<mpq_class> polygon, mpq_class nx, mpq
 	    my_state.ct += t0;
 	    my_state.bi -= 1; 
 	    my_state.bt = 1;
-	    bx = getmod(polygon, 2*my_state.bi+2);
-	    by = getmod(polygon, 2*my_state.bi+3);
-	    ebx = getmod(polygon, 2*my_state.bi+2) - getmod(polygon, 2*my_state.bi+0);
-	    eby = getmod(polygon, 2*my_state.bi+3) - getmod(polygon, 2*my_state.bi+1);
+	    bx = polygon[(2*my_state.bi+2)%(2*sz)];
+	    by = polygon[(2*my_state.bi+3)%(2*sz)];
+	    ebx = polygon[(2*my_state.bi+2)%(2*sz)] - polygon[(2*my_state.bi+0)%(2*sz)];
+	    eby = polygon[(2*my_state.bi+3)%(2*sz)] - polygon[(2*my_state.bi+1)%(2*sz)];
 	}
     }
-}
+}*/
 
-struct state maximum_triangle(std::vector<mpq_class> polygon){
+void maximum_triangle(std::vector<mpq_class> polygon, unsigned int *ret, state_flag *status){
 
-    struct state my_state;
-    int ret[3] = {0,0,0};
+    mpq_class nx, ny;
+    unsigned int ai,bi,ci;
+    mpq_class bt, ct;
+    //state_flag status;
+    //int ret[3] = {0,0,0};
     unsigned int sz = polygon.size()/2;
     bool max_at_vert=false;
     unsigned int iter = 0;
     unsigned int maxiter = sz*10;
-    int ai_start;
+    unsigned int ai_start;
 
     mpq_class ax,ay,bx,by,cx,cy;
     mpq_class pax,pay,pbx,pby,pcx,pcy;
@@ -164,104 +169,104 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
     mpq_class amax = -1;
 
     /*my_state = anchored_triangle(polygon,polygon[1]-polygon[3],polygon[2]-polygon[0]);
-    my_state.nx = polygon[1]-polygon[3];
-    my_state.ny = polygon[2]-polygon[0];
-    if (my_state.status != status_ok) {return my_state;}
-    ai_start = my_state.ai = 0;*/
+    nx = polygon[1]-polygon[3];
+    ny = polygon[2]-polygon[0];
+    if (status != status_ok) {return; }
+    ai_start = ai = 0;*/
 
     ////////////////////////////
-    if (polygon.size() < 3) { my_state.status = status_no_interior; return my_state; }
-    if (!is_convex(polygon)) { my_state.status = status_not_convex; return my_state; }
-    my_state.status = status_ok;
+    if (polygon.size() < 3) { *status = status_no_interior; return;  }
+    if (!is_convex(polygon)) { *status = status_not_convex; return;  }
+    *status = status_ok;
 
-    my_state.bi = 1;
-    my_state.ci = my_state.bi+1;
-    my_state.ai = my_state.bi+2;
-    my_state.bt = 0;
-    my_state.ct = 0;
-    area = (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1));
+    bi = 1;
+    ci = bi+1;
+    ai = bi+2;
+    bt = 0;
+    ct = 0;
+    area = (polygon[(2*ci+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]);
     amax = area;
     while (true){
-	if (area <= (getmod(polygon, 2*my_state.ci+2)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+3)-getmod(polygon, 2*my_state.bi+1))) my_state.ci++;
-	else if (area <= (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+3)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+2)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1))) my_state.ai++;
+	if (area <= (polygon[(2*ci+2)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+3)%(2*sz)]-polygon[(2*bi+1)%(2*sz)])) ci++;
+	else if (area <= (polygon[(2*ci+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+3)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+2)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)])) ai++;
 	else break;
-	area = (getmod(polygon, 2*my_state.ci+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ai+1)-getmod(polygon, 2*my_state.bi+1)) - (getmod(polygon, 2*my_state.ai+0)-getmod(polygon, 2*my_state.bi+0))*(getmod(polygon, 2*my_state.ci+1)-getmod(polygon, 2*my_state.bi+1));
+	area = (polygon[(2*ci+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ai+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]) - (polygon[(2*ai+0)%(2*sz)]-polygon[(2*bi+0)%(2*sz)])*(polygon[(2*ci+1)%(2*sz)]-polygon[(2*bi+1)%(2*sz)]);
     }
 
-    ai_start = my_state.ai;
+    ai_start = ai;
     
     /////////////////////////////
 
-    ax = getmod(polygon, 2*my_state.ai+0);
-    ay = getmod(polygon, 2*my_state.ai+1);
-    bx = getmod(polygon, 2*my_state.bi+0);
-    by = getmod(polygon, 2*my_state.bi+1);
-    cx = getmod(polygon, 2*my_state.ci+0);
-    cy = getmod(polygon, 2*my_state.ci+1);
+    ax = polygon[(2*ai+0)%(2*sz)];
+    ay = polygon[(2*ai+1)%(2*sz)];
+    bx = polygon[(2*bi+0)%(2*sz)];
+    by = polygon[(2*bi+1)%(2*sz)];
+    cx = polygon[(2*ci+0)%(2*sz)];
+    cy = polygon[(2*ci+1)%(2*sz)];
 
-    eax = getmod(polygon, 2*my_state.ai+2) - getmod(polygon, 2*my_state.ai+0);
-    eay = getmod(polygon, 2*my_state.ai+3) - getmod(polygon, 2*my_state.ai+1);
-    ebx = getmod(polygon, 2*my_state.bi+2) - getmod(polygon, 2*my_state.bi+0);
-    eby = getmod(polygon, 2*my_state.bi+3) - getmod(polygon, 2*my_state.bi+1);
-    ecx = getmod(polygon, 2*my_state.ci+2) - getmod(polygon, 2*my_state.ci+0);
-    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
+    eax = polygon[(2*ai+2)%(2*sz)] - polygon[(2*ai+0)%(2*sz)];
+    eay = polygon[(2*ai+3)%(2*sz)] - polygon[(2*ai+1)%(2*sz)];
+    ebx = polygon[(2*bi+2)%(2*sz)] - polygon[(2*bi+0)%(2*sz)];
+    eby = polygon[(2*bi+3)%(2*sz)] - polygon[(2*bi+1)%(2*sz)];
+    ecx = polygon[(2*ci+2)%(2*sz)] - polygon[(2*ci+0)%(2*sz)];
+    ecy = polygon[(2*ci+3)%(2*sz)] - polygon[(2*ci+1)%(2*sz)];
 
-    bx += my_state.bt*ebx;
-    by += my_state.bt*eby;
-    cx += my_state.ct*ecx;
-    cy += my_state.ct*ecy;
+    bx += bt*ebx;
+    by += bt*eby;
+    cx += ct*ecx;
+    cy += ct*ecy;
 
-    my_state.nx = cy - by;
-    my_state.ny = bx - cx;
+    nx = cy - by;
+    ny = bx - cx;
 
-    while (my_state.ai <= ai_start + (int) sz) {
+    while (ai <= ai_start + sz) {
 
-	if (iter++ > maxiter) {my_state.status=status_maxiter_exceeded; return my_state;}
+	if (iter++ > maxiter) {*status=status_maxiter_exceeded; return; }
 
 	area = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
 	if ( (area > amax) || ( (area == amax) && !max_at_vert ) ) {
 	    amax = area;
-	    if (my_state.ct == 0 && my_state.bt == 0) {
+	    if (ct == 0 && bt == 0) {
 		max_at_vert = true;
-		ret[0] = (my_state.ai+sz)%sz;
-		ret[1] = (my_state.bi+sz)%sz;
-		ret[2] = (my_state.ci+sz)%sz;
+		ret[0] = (ai+sz)%sz;
+		ret[1] = (bi+sz)%sz;
+		ret[2] = (ci+sz)%sz;
 	    } else max_at_vert = false;
 	}
 	
-	if (my_state.nx*eax + my_state.ny*eay == 0) { //support line coincides with forward edge at A, advance A
-	    my_state.ai += 1;
-	    ax = getmod(polygon, 2*my_state.ai+0);
-	    ay = getmod(polygon, 2*my_state.ai+1);
-	    eax = getmod(polygon, 2*my_state.ai+2) - getmod(polygon, 2*my_state.ai+0);
-	    eay = getmod(polygon, 2*my_state.ai+3) - getmod(polygon, 2*my_state.ai+1);
+	if (nx*eax + ny*eay == 0) { //support line coincides with forward edge at A, advance A
+	    ai += 1;
+	    ax = polygon[(2*ai+0)%(2*sz)];
+	    ay = polygon[(2*ai+1)%(2*sz)];
+	    eax = polygon[(2*ai+2)%(2*sz)] - polygon[(2*ai+0)%(2*sz)];
+	    eay = polygon[(2*ai+3)%(2*sz)] - polygon[(2*ai+1)%(2*sz)];
 	    continue;
 	}
-	if (my_state.bt > 1) {my_state.status=status_runtime_error; return my_state;}
-	if (my_state.ct > 1)  {my_state.status=status_runtime_error; return my_state;}
-	if (my_state.bt == 1) {
-	    my_state.bi += 1;
-	    my_state.bt = 0;
-	    bx = getmod(polygon, 2*my_state.bi+0);
-	    by = getmod(polygon, 2*my_state.bi+1);
-	    ebx = getmod(polygon, 2*my_state.bi+2) - getmod(polygon, 2*my_state.bi+0);
-	    eby = getmod(polygon, 2*my_state.bi+3) - getmod(polygon, 2*my_state.bi+1);
+	if (bt > 1) {*status=status_runtime_error; return; }
+	if (ct > 1)  {*status=status_runtime_error; return; }
+	if (bt == 1) {
+	    bi += 1;
+	    bt = 0;
+	    bx = polygon[(2*bi+0)%(2*sz)];
+	    by = polygon[(2*bi+1)%(2*sz)];
+	    ebx = polygon[(2*bi+2)%(2*sz)] - polygon[(2*bi+0)%(2*sz)];
+	    eby = polygon[(2*bi+3)%(2*sz)] - polygon[(2*bi+1)%(2*sz)];
 	    continue;
 	}
-	if (my_state.ct == 1) {
-	    my_state.ci += 1;
-	    my_state.ct = 0;
-	    cx = getmod(polygon, 2*my_state.ci+0);
-	    cy = getmod(polygon, 2*my_state.ci+1);
-	    ecx = getmod(polygon, 2*my_state.ci+2) - getmod(polygon, 2*my_state.ci+0);
-	    ecy = getmod(polygon, 2*my_state.ci+3) - getmod(polygon, 2*my_state.ci+1);
+	if (ct == 1) {
+	    ci += 1;
+	    ct = 0;
+	    cx = polygon[(2*ci+0)%(2*sz)];
+	    cy = polygon[(2*ci+1)%(2*sz)];
+	    ecx = polygon[(2*ci+2)%(2*sz)] - polygon[(2*ci+0)%(2*sz)];
+	    ecy = polygon[(2*ci+3)%(2*sz)] - polygon[(2*ci+1)%(2*sz)];
 	    continue;
 	}
 
 #ifdef DEBUG
-	std::cout << my_state.ai << "\t" << my_state.bi << "\t" << my_state.ci << "\t";
-        std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << my_state.bt.get_d() << "\t";
-	std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << my_state.ct.get_d() << "\t";
+	std::cout << ai << "\t" << bi << "\t" << ci << "\t";
+        std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << bt.get_d() << "\t";
+	std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << ct.get_d() << "\t";
 	std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << area.get_d() << std::endl;
 #endif
 
@@ -269,8 +274,8 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	ee = ebx*ecy - ecx*eby;
 	fb = ebx*(ay + by - 2*cy) - eby*(ax + bx - 2*cx);
 	fc = ecx*(ay + cy - 2*by) - ecy*(ax + cx - 2*bx);
-	tq  = my_state.nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
-	tq -= my_state.ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+	tq  = nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
+	tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
 #ifdef DEBUG
 	std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
 	std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << ee.get_d() << "\t";
@@ -287,7 +292,7 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    //   (1) B hits end of edge,
 	    //   (2) BC becomes parallel to ea,
 	    //   (3) tq becomes 0
-	    t1 = 1 - my_state.bt;
+	    t1 = 1 - bt;
 
 	    if (eay*ebx - eax*eby == 0) t2 = -1;
 	    else t2 = (by*eax - cy*eax - bx*eay + cx*eay)/(eay*ebx - eax*eby);
@@ -311,13 +316,13 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    if (t3 < t1 && t3 > 0) t1 = t3;
 	    if (t2 < t1 && t2 > 0) t1 = t2;
 
-	    if (t1 < 0) {my_state.status=status_runtime_error; return my_state;}
+	    if (t1 < 0) {*status=status_runtime_error; return; }
 
 	    bx += t1*ebx;
 	    by += t1*eby;
-	    my_state.bt += t1;
-	    my_state.nx = cy - by;
-	    my_state.ny = bx - cx;
+	    bt += t1;
+	    nx = cy - by;
+	    ny = bx - cx;
 
 	    continue;
 	}
@@ -328,7 +333,7 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    //   (1) C hits end of edge,
 	    //   (2) BC becomes parallel to ea,
 	    //   (3) tq becomes 0
-	    t1 = 1 - my_state.ct;
+	    t1 = 1 - ct;
 
 	    //std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << ecy.get_d() << "\t";
 	    //std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << eax.get_d() << "\t";
@@ -360,13 +365,13 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    if (t3 < t1 && t3 > 0) t1 = t3;
 	    if (t2 < t1 && t2 > 0) t1 = t2;
 	    
-	    if (t1 < 0) {my_state.status=status_runtime_error; return my_state;}
+	    if (t1 < 0) {*status=status_runtime_error; return; }
 
 	    cx += t1*ecx;
 	    cy += t1*ecy;
-	    my_state.ct += t1;
-	    my_state.nx = cy - by;
-	    my_state.ny = bx - cx;
+	    ct += t1;
+	    nx = cy - by;
+	    ny = bx - cx;
 
 	    continue;
 	}
@@ -389,12 +394,12 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 #endif
 
 	    //time in terms of b's motion until it hits vertex
-	    t1b = 1 - my_state.bt;
+	    t1b = 1 - bt;
 	    if (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*t1b == 0) {t1b = t1c = -1;}
 	    else t1c = (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby)*t1b/(ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*t1b);
 
 	    //time in terms of c's motion until it hits vertex
-	    t2c = 1 - my_state.ct;
+	    t2c = 1 - ct;
 	    //time in terms of b's motion until c hits vertex
 	    if (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*t2c == 0) {t2b = t2c = -1;}
 	    else t2b = (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy)*t2c/(ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*t2c);
@@ -429,64 +434,59 @@ struct state maximum_triangle(std::vector<mpq_class> polygon){
 	    //time in terms of b's motion until (1 or 2 or 3)
 	    /*if (t2 < t1) t1 = t2;
 	    if (t3 < t1 && t3 > 0) t1 = t3;
-	    if (t1 < 0) {my_state.status=status_runtime_error; return my_state;}*/
+	    if (t1 < 0) {*status=status_runtime_error; return; }*/
 	    
 	    //if (t2b <= t1b && t2c <= t1c) {t1b = t2b; t1c = t2c;}
 	    if ( (t1c < 0) || (t2b <= t1b && t2c <= t1c) ) { t1c = t2c; t1b = t2b;}
 	    if (t3b <= t1b && t3c <= t1c && t3b >= 0 && t3c >= 0) {t1b = t3b; t1c = t3c;}
-	    if (t1b < 0 || t1c < 0) {my_state.status=status_runtime_error; return my_state;}
+	    if (t1b < 0 || t1c < 0) {*status=status_runtime_error; return; }
 	    //time in terms of c's motion until (1 or 2 or 3)
 	    //t2 = (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby)*t1/(ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*t1);
 
 	    bx += t1b*ebx;
 	    by += t1b*eby;
-	    my_state.bt += t1b;
+	    bt += t1b;
 	    cx += t1c*ecx;
 	    cy += t1c*ecy;
-	    my_state.ct += t1c;
-	    my_state.nx = cy - by;
-	    my_state.ny = bx - cx;
+	    ct += t1c;
+	    nx = cy - by;
+	    ny = bx - cx;
 	}
     }
 
-    if (!max_at_vert) my_state.status = status_max_not_at_vertex;
-    my_state.ai = ret[0];
-    my_state.bi = ret[1];
-    my_state.ci = ret[2];
-    return my_state;
-
-
+    if (!max_at_vert) *status = status_max_not_at_vertex;
+    //ai = ret[0];
+    //bi = ret[1];
+    //ci = ret[2];
+    return; 
 }
 
-struct state naive_maximum_triangle(std::vector<mpq_class> polygon){
+void brute_force_maximum_triangle(std::vector<mpq_class> polygon, unsigned int *ret, state_flag *status){
     mpq_class amax, area;
     mpq_class ax,ay,bx,by,cx,cy;
     unsigned int sz = polygon.size()/2;
-    int ret[3] = {0,0,0};
-    struct state my_state;
+    unsigned int ai,bi,ci;
 
     amax = -1;
-    for (my_state.ai = 0; my_state.ai+2 < (int) sz; my_state.ai++) { 
-	ax = getmod(polygon, 2*my_state.ai+0);
-	ay = getmod(polygon, 2*my_state.ai+1);
-	for (my_state.bi = my_state.ai+1; my_state.bi+1 < (int) sz; my_state.bi++) { 
-	    bx = getmod(polygon, 2*my_state.bi+0);
-	    by = getmod(polygon, 2*my_state.bi+1);
-	    for (my_state.ci = my_state.bi+1; my_state.ci < (int) sz; my_state.ci++) { 
-		cx = getmod(polygon, 2*my_state.ci+0);
-		cy = getmod(polygon, 2*my_state.ci+1);
+    *status = status_ok;
+    for (ai = 0; ai+2 < sz; ai++) { 
+	ax = polygon[(2*ai+0)%(2*sz)];
+	ay = polygon[(2*ai+1)%(2*sz)];
+	for (bi = ai+1; bi+1 < sz; bi++) { 
+	    bx = polygon[(2*bi+0)%(2*sz)];
+	    by = polygon[(2*bi+1)%(2*sz)];
+	    for (ci = bi+1; ci < sz; ci++) { 
+		cx = polygon[(2*ci+0)%(2*sz)];
+		cy = polygon[(2*ci+1)%(2*sz)];
 		area = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
 		if (area > amax) {
 		    amax = area;
-		    ret[0] = my_state.ai;
-		    ret[1] = my_state.bi;
-		    ret[2] = my_state.ci;
+		    ret[0] = ai;
+		    ret[1] = bi;
+		    ret[2] = ci;
 		}
 	    }
 	}
     }
-    my_state.ai = ret[0];
-    my_state.bi = ret[1];
-    my_state.ci = ret[2];
-    return my_state;
+    return;
 }

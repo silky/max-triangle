@@ -2,7 +2,7 @@
 #include <fstream>
 #include "max-triangle.hpp"
 
-bool test_anchor(){
+/*bool test_anchor(){
     std::vector <std::vector <mpq_class> > polygons = {{3040, 4460, 2506, 4423, 759, 2927, 1000, 1000, 1213, 691, 3383, 413, 5000, 1000, 4752, 4262, 4745, 4322},{707, 707, 258, 965, -258, 965, -707, 707, -965, 258, -965, -258, -707, -707, -258, -965, 258, -965, 707, -707, 965, -258, 965, 258}};
     std::vector <mpq_class> normals = {1000, 0, 965, 258, 866, 500, 707, 707, 500, 866, 258, 965, 0, 1000, -258, 965, -500, 866, -707, 707, -866, 500, -965, 258, -1000, 0, -965, -258, -866, -500, -707, -707, -500, -866, -258, -965, 0, -1000, 258, -965, 500, -866, 707, -707, 866, -500, 965, -258};
     std::vector <std::string> answers = { "4745/1", "489105/539", "4745/1", "4322/1", "5000/1", "1000/1", "6596369440/1609721", "7041532300/1609721", "5000/1", "1000/1", "90290000/30059", "133987660/30059", "22731048614502/4573535527", "12741295770649/9147071054", "14442431582001/6561369482", "13653989196599/3280684741", "10042817138245824/2049207949003", "4722240784813694/2049207949003", "2186256639044071/1097120460666", "2185171897579159/548560230333", "22709194554162112/4679521977703", "13734404319070422/4679521977703", "10004525165592089/5749137493126",
@@ -38,18 +38,20 @@ bool test_anchor(){
     }
 
     return true;
-}
+}*/
 
 bool test_max() {
     std::vector <std::vector <mpq_class> > polygons;
 
     unsigned int i;
-    struct state s1,s2;
     mpq_class ax,ay,bx,by,cx,cy;
     mpq_class z1,z2;
 
     std::string line, entry;
     std::ifstream infile("test-polygons");
+
+    unsigned int ret[3];
+    state_flag status;
 
     while (std::getline(infile, line)) {
 	std::stringstream line_stream(line);
@@ -61,26 +63,27 @@ bool test_max() {
 
     for (i = 0; i < polygons.size(); i++) {
     //for (i = 28; i < 29; i++) {
-	s1 = maximum_triangle(polygons[i]);
-	if (s1.status != status_ok) {
+	//s1 = maximum_triangle(polygons[i]);
+	maximum_triangle(polygons[i], ret, &status);
+	if (status != status_ok) {
 	    std::cout << i << " ";
-	    print_status(s1.status);
+	    print_status(status);
 	    return false;
 	}
-	s2 = naive_maximum_triangle(polygons[i]);
-	ax = polygons[i][2*s1.ai+0];
-	ay = polygons[i][2*s1.ai+1];
-	bx = polygons[i][2*s1.bi+0];
-	by = polygons[i][2*s1.bi+1];
-	cx = polygons[i][2*s1.ci+0];
-	cy = polygons[i][2*s1.ci+1];
+	ax = polygons[i][2*ret[0]+0];
+	ay = polygons[i][2*ret[0]+1];
+	bx = polygons[i][2*ret[1]+0];
+	by = polygons[i][2*ret[1]+1];
+	cx = polygons[i][2*ret[2]+0];
+	cy = polygons[i][2*ret[2]+1];
 	z1 = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
-    	ax = polygons[i][2*s2.ai+0];
-	ay = polygons[i][2*s2.ai+1];
-	bx = polygons[i][2*s2.bi+0];
-	by = polygons[i][2*s2.bi+1];
-	cx = polygons[i][2*s2.ci+0];
-	cy = polygons[i][2*s2.ci+1];
+	brute_force_maximum_triangle(polygons[i], ret, &status);
+    	ax = polygons[i][2*ret[0]+0];
+	ay = polygons[i][2*ret[0]+1];
+	bx = polygons[i][2*ret[1]+0];
+	by = polygons[i][2*ret[1]+1];
+	cx = polygons[i][2*ret[2]+0];
+	cy = polygons[i][2*ret[2]+1];
 	z2 = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
 	std::cout << z1 << " = " << z2 << std::endl;
 	if (z1 != z2) return false;
@@ -89,8 +92,8 @@ bool test_max() {
 }
 
 int main(int argc, char *argv[]){
-    if (test_anchor()) std::cout << "anchor triangle finding unit test PASSED" << std::endl;
-    else std::cout << "anchor triangle finding unit test FAILED" << std::endl;
+    //if (test_anchor()) std::cout << "anchor triangle finding unit test PASSED" << std::endl;
+    //else std::cout << "anchor triangle finding unit test FAILED" << std::endl;
     if (test_max()) std::cout << "maximum triangle finding unit test PASSED" << std::endl;
     else std::cout << "maximum triangle finding unit test FAILED" << std::endl;
     
