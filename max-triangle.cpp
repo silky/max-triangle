@@ -109,11 +109,13 @@ namespace InscribedTriangle {
 	    //dct += ny*ecx*eby*(cy-ay) + ny*ebx*ecy*(ay+by-2*cy);
 	    //dct /= 2*(ebx*ecy - ecx*eby)*(ecx*nx + ecy*ny);
 	    
-	    tq  = nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
-	    tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+	    tq  = nx*( (by-cy)*ebx*ecx + (cx-ax)*eby*ecx + (ax-bx)*ebx*ecy);
+	    tq -= ny*( (bx-cx)*eby*ecy + (cy-ay)*ebx*ecy + (ay-by)*eby*ecx);
+	    //tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+	    tq /= 2*ee;
 
-	    dbt = -tq/(2*neb*ee);
-	    dct = tq/(2*nec*ee);
+	    dbt = -tq/neb;
+	    dct = tq/nec;
 
 	    //std::cout << bi << ", " << ci << ", " << bt << ", " << ct << ", " << dbt << ", " << dct << ", " << bx << ", " << by << ", " << cx << ", " << cy << std::endl;
 
@@ -159,7 +161,7 @@ namespace InscribedTriangle {
 
     void maximum_triangle(std::vector<mpq_class> polygon, unsigned int *ret, state_flag *status){
 
-	mpq_class nx, ny;
+	//mpq_class nx, ny;
 	unsigned int ai,bi,ci;
 	mpq_class bt, ct;
 	unsigned int sz = polygon.size()/2;
@@ -170,11 +172,10 @@ namespace InscribedTriangle {
 	mpq_class t_init[2];
 
 	mpq_class ax,ay,bx,by,cx,cy;
-	mpq_class pax,pay,pbx,pby,pcx,pcy;
 	mpq_class eax,eay,ebx,eby,ecx,ecy;
-	mpq_class t1,t2,t3;
-	mpq_class ee,fb,fc,tq;
-	mpq_class area;
+	mpq_class tb1,tb2,tb3,tb4;
+	mpq_class tc1,tc2,tc3,tc4;
+	mpq_class qq, area;
 	mpq_class amax = -1;
 
 	/*if (polygon.size() < 3) { *status = status_no_interior; return;  }
@@ -223,8 +224,8 @@ namespace InscribedTriangle {
 	cx += ct*ecx;
 	cy += ct*ecy;
 
-	nx = cy - by;
-	ny = bx - cx;
+	//nx = cy - by;
+	//ny = bx - cx;
 
 	while (ai <= ai_start + sz) {
 
@@ -241,7 +242,7 @@ namespace InscribedTriangle {
 		} else max_at_vert = false;
 	    }
 	    
-	    if (nx*eax + ny*eay == 0) { //support line coincides with forward edge at A, advance A
+	    if ((cy-by)*eax - (cx-bx)*eay == 0) { //support line coincides with forward edge at A, advance A
 		ai += 1;
 		ax = polygon[(2*ai+0)%(2*sz)];
 		ay = polygon[(2*ai+1)%(2*sz)];
@@ -278,69 +279,72 @@ namespace InscribedTriangle {
 #endif
 
 
-	    ee = ebx*ecy - ecx*eby;
-	    fb = ebx*(ay + by - 2*cy) - eby*(ax + bx - 2*cx);
-	    fc = ecx*(ay + cy - 2*by) - ecy*(ax + cx - 2*bx);
-	    tq  = nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
-	    tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+	    //ee = ebx*ecy - ecx*eby;
+	    //fb = ebx*(ay + by - 2*cy) - eby*(ax + bx - 2*cx);
+	    //fc = ecx*(ay + cy - 2*by) - ecy*(ax + cx - 2*bx);
+	    //tq  = nx*(by*ebx*ecx - cy*ebx*ecx - ax*eby*ecx + cx*eby*ecx + ax*ebx*ecy - bx*ebx*ecy);
+	    //tq -= ny*(ay*eby*ecx - by*eby*ecx - ay*ebx*ecy + cy*ebx*ecy + bx*eby*ecy - cx*eby*ecy);
+	    qq  = (cy-by)*((by-cy)*ebx*ecx - (ax-cx)*eby*ecx + (ax-bx)*ebx*ecy);
+	    qq += (cx-bx)*((bx-cx)*eby*ecy - (ay-cy)*ebx*ecy + (ay-by)*eby*ecx);
 #ifdef DEBUG
-	    std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
-	    std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << ee.get_d() << "\t";
-	    std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << fb.get_d() << "\t";
-	    std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << fc.get_d() << std::endl;
+	    std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << qq.get_d() << "\t";
 #endif
-	    //tq > 0 ---> move right
-	    //tq < 0 ---> move left
-	    //tq = 0 ---> swing
+	    //qq > 0 ---> move right
+	    //qq < 0 ---> move left
+	    //qq = 0 ---> swing
 	    
-	    if (tq > 0) {
+	    if (qq > 0) {
 		//C stays fixed, B moves along eb
 		//possible stopping conditions: 
 		//   (1) B hits end of edge,
-		//   (2) BC becomes parallel to ea,
-		//   (3) tq becomes 0
-		t1 = 1 - bt;
+		//   (3) BC becomes parallel to ea,
+		//   (4) Q becomes 0
+		tb1 = 1 - bt;
 
-		if (eay*ebx - eax*eby == 0) t2 = -1;
-		else t2 = (by*eax - cy*eax - bx*eay + cx*eay)/(eay*ebx - eax*eby);
+		if (eay*ebx - eax*eby == 0) tb3 = -1;
+		//else t2 = (by*eax - cy*eax - bx*eay + cx*eay)/(eay*ebx - eax*eby);
+		else tb3 = (eax*(cy-by) - eay*(cx-bx))/(eax*eby - eay*ebx);
 
-		if (ee == 0) t3 = -1;
+		if (ebx*ecy - ecx*eby == 0) tb4 = -1;
 		else {
-		    t3  = ebx*ecx*(by-cy)*(by-cy);
-		    t3 += eby*ecy*(bx-cx)*(bx-cx);
-		    t3 += ebx*ecy*(-ay*bx + ax*by - bx*by + ay*cx - ax*cy + 2*bx*cy - cx*cy);
-		    t3 += eby*ecx*( ay*bx - ax*by - bx*by - ay*cx + 2*by*cx + ax*cy - cx*cy);
-		    t3 /= ee*fb;
+		    tb4  = ebx*ecx*(by-cy)*(by-cy);
+		    tb4 += eby*ecy*(bx-cx)*(bx-cx);
+		    //t3 += ebx*ecy*(-ay*bx + ax*by - bx*by + ay*cx - ax*cy + 2*bx*cy - cx*cy);
+		    //t3 += eby*ecx*( ay*bx - ax*by - bx*by - ay*cx + 2*by*cx + ax*cy - cx*cy);
+		    tb4 += ebx*ecy*( (ax-bx)*by + (cx-bx)*ay + (2*bx-ax-cx)*cy);
+		    tb4 += eby*ecx*( (bx-cx)*ay - (cx-ax)*cy + (2*cx-ax-bx)*by);
+		    tb4 /= ebx*ecy - eby*ecx;
+		    tb4 /= ebx*(ay + by - 2*cy) - eby*(ax + bx - 2*cx);
 		}
 
 #ifdef DEBUG
-		std::cout << "tq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
+		std::cout << "qq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << qq.get_d() << "\t";
 		std::cout << "t1: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t1.get_d() << "\t";
 		std::cout << "t2: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t2.get_d() << "\t";
 		std::cout << "t3: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t3.get_d() << std::endl;
 #endif
 
-		if (t3 < t1 && t3 > 0) t1 = t3;
-		if (t2 < t1 && t2 > 0) t1 = t2;
+		if (tb4 < tb1 && tb4 > 0) tb1 = tb4;
+		if (tb3 < tb1 && tb3 > 0) tb1 = tb3;
 
-		if (t1 < 0) {*status=status_runtime_error; return; }
+		if (tb1 < 0) {*status=status_runtime_error; return; }
 
-		bx += t1*ebx;
-		by += t1*eby;
-		bt += t1;
-		nx = cy - by;
-		ny = bx - cx;
+		bx += tb1*ebx;
+		by += tb1*eby;
+		bt += tb1;
+		//nx = cy - by;
+		//ny = bx - cx;
 
 		continue;
 	    }
 
-	    if (tq < 0) {
+	    if (qq < 0) {
 		//B stays fixed, C moves along ec
 		//possible stopping conditions: 
-		//   (1) C hits end of edge,
-		//   (2) BC becomes parallel to ea,
-		//   (3) tq becomes 0
-		t1 = 1 - ct;
+		//   (2) C hits end of edge,
+		//   (3) BC becomes parallel to ea,
+		//   (4) Q becomes 0
+		tc2 = 1 - ct;
 
 		//std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << ecy.get_d() << "\t";
 		//std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << eax.get_d() << "\t";
@@ -349,42 +353,45 @@ namespace InscribedTriangle {
 		//std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << cy.get_d() << "\t";
 		//std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << bx.get_d() << "\t";
 		//std::cout << std::fixed << std::setfill(' ') << std::setw(10) << std::setprecision(3) << by.get_d() << std::endl;
-		if (eay*ecx - eax*ecy == 0) t2 = -1;
-		else t2 = -(by*eax - cy*eax - bx*eay + cx*eay)/(eay*ecx - eax*ecy);
+		if (eay*ecx - eax*ecy == 0) tc3 = -1;
+		//else t2 = -(by*eax - cy*eax - bx*eay + cx*eay)/(eay*ecx - eax*ecy);
+		else tc3 = (eax*(by-cy) - eay*(bx-cx))/(eax*ecy - eay*ecx);
 
-		if (ee == 0) t3 = -1;
+		if (ebx*ecy - ecx*eby == 0) tc4 = -1;
 		else {
-		    t3  = ebx*ecx*(by-cy)*(by-cy);
-		    t3 += eby*ecy*(bx-cx)*(bx-cx);
-		    t3 += ebx*ecy*(-ay*bx + ax*by - bx*by + ay*cx - ax*cy + 2*bx*cy - cx*cy);
-		    t3 += eby*ecx*( ay*bx - ax*by - bx*by - ay*cx + 2*by*cx + ax*cy - cx*cy);
-		    t3 /= -ee*fc;
+		    tc4  = ebx*ecx*(by-cy)*(by-cy);
+		    tc4 += eby*ecy*(bx-cx)*(bx-cx);
+		    //t3 += ebx*ecy*(-ay*bx + ax*by - bx*by + ay*cx - ax*cy + 2*bx*cy - cx*cy);
+		    //t3 += eby*ecx*( ay*bx - ax*by - bx*by - ay*cx + 2*by*cx + ax*cy - cx*cy);
+		    tc4 += ebx*ecy*( (ax-bx)*by + (cx-bx)*ay + (2*bx-ax-cx)*cy);
+		    tc4 += eby*ecx*( (bx-cx)*ay - (cx-ax)*cy + (2*cx-ax-bx)*by);
+		    tc4 /= -( ebx*ecy - eby*ecx );
+		    tc4 /= ecx*(ay + cy - 2*by) - ecy*(ax + cx - 2*bx);
 		}
 
 #ifdef DEBUG
-		std::cout << "tq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
+		std::cout << "qq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << qq.get_d() << "\t";
 		std::cout << "t1: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t1.get_d() << "\t";
 		std::cout << "t2: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t2.get_d() << "\t";
 		std::cout << "t3: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t3.get_d() << std::endl;
 #endif
 
 
-		if (t3 < t1 && t3 > 0) t1 = t3;
-		if (t2 < t1 && t2 > 0) t1 = t2;
+		if (tc4 < tc2 && tc4 > 0) tc2 = tc4;
+		if (tc3 < tc2 && tc3 > 0) tc2 = tc3;
 		
-		if (t1 < 0) {*status=status_runtime_error; return; }
+		if (tc2 < 0) {*status=status_runtime_error; return; }
 
-		cx += t1*ecx;
-		cy += t1*ecy;
-		ct += t1;
-		nx = cy - by;
-		ny = bx - cx;
+		cx += tc2*ecx;
+		cy += tc2*ecy;
+		ct += tc2;
+		//nx = cy - by;
+		//ny = bx - cx;
 
 		continue;
 	    }
 
-	    if (tq == 0) {
-		mpq_class t1b,t1c,t2b,t2c,t3b,t3c;
+	    if (qq == 0) {
 		//B and C both move
 		//possible stopping conditions: 
 		//   (1) B hits end of edge,
@@ -400,56 +407,64 @@ namespace InscribedTriangle {
 		std::cout << "ee: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << ee.get_d() << std::endl;
 #endif
 
+
+		//mpq_class beta = (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby);
+		//mpq_class gamma = (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy);
+		mpq_class beta =  ebx*(2*cy-ay-by) - eby*(2*cx-bx-ax);
+		mpq_class gamma = ecx*(2*by-ay-cy) - ecy*(2*bx-cx-ax);
+		mpq_class alpha = 2*(ebx*ecy - ecx*eby);
+
 		//time in terms of b's motion until it hits vertex
-		t1b = 1 - bt;
-		if (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*t1b == 0) {t1b = t1c = -1;}
-		else t1c = (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby)*t1b/(ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*t1b);
+		tb1 = 1 - bt;
+		//if (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy + 2*ee*tb1 == 0) {tb1 = tc1 = -1;}
+		if (gamma - alpha*tb1 == 0) {tb1 = tc1 = -1;}
+		else tc1 = beta*tb1/(gamma - alpha*tb1);
 
 		//time in terms of c's motion until it hits vertex
-		t2c = 1 - ct;
+		tc2 = 1 - ct;
 		//time in terms of b's motion until c hits vertex
-		if (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*t2c == 0) {t2b = t2c = -1;}
-		else t2b = (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy)*t2c/(ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*t2c);
+		//if (ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*tc2 == 0) {tb2 = tc2 = -1;}
+		//else tb2 = (ay*ecx - 2*by*ecx + cy*ecx - ax*ecy + 2*bx*ecy - cx*ecy)*tc2/(ay*ebx + by*ebx - 2*cy*ebx - ax*eby - bx*eby + 2*cx*eby - 2*ee*tc2);
+		if (beta + alpha*tc2 == 0) {tb2 = tc2 = -1;}
+		else tb2 = gamma*tc2/(beta + alpha*tc2);
 
-		if (eay*ebx - eax*eby == 0) {t3b = t3c = -1;}
-		else if (eay*ecx - eax*ecy == 0) {t3b = t3c = -1;}
+		if (eay*ebx - eax*eby == 0) {tb3 = tc3 = -1;}
+		else if (eay*ecx - eax*ecy == 0) {tb3 = tc3 = -1;}
 		else {
-		    t3b  = ebx*ecx*eay*(by-cy);
-		    t3b += ebx*ecy*(-ay*eax + by*eax + ax*eay - 2*bx*eay + cx*eay);
-		    t3b += eby*ecx*( ay*eax - 2*by*eax + cy*eax - ax*eay + bx*eay);
-		    t3b += eby*ecy*eax*(bx-cx);
-		    t3b /= 2*ee*(eay*ebx - eax*eby);
+		    tb3  = ebx*ecx*eay*(by-cy)+eby*ecy*eax*(bx-cx);
+		    tb3 += ebx*ecy*(eax*(by-ay) - eay*(2*bx-ax-cx));
+		    tb3 += eby*ecx*(eay*(bx-ax) - eax*(2*by-ay-cy));
+		    tb3 /= alpha*(eay*ebx - eax*eby);
 
-		    t3c  = ebx*ecx*eay*(by-cy);
-		    t3c += ebx*ecy*(-ay*eax - by*eax + 2*cy*eax + ax*eay - cx*eay);
-		    t3c += eby*ecx*( ay*eax - cy*eax - ax*eay - bx*eay + 2*cx*eay);
-		    t3c += eby*ecy*eax*(bx-cx);
-		    t3c /= 2*ee*(eay*ecx - eax*ecy);
+		    tc3  = ebx*ecx*eay*(by-cy)+eby*ecy*eax*(bx-cx);
+		    tc3 += eby*ecx*(-eax*(cy-ay) + eay*(2*cx-ax-bx));
+		    tc3 += ebx*ecy*(-eay*(cx-ax) + eax*(2*cy-ay-by));
+		    tc3 /= alpha*(eay*ecx - eax*ecy);
 		}
 
 #ifdef DEBUG
-		std::cout << "tq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
-		std::cout << "t1b: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t1b.get_d() << "\t";
-		std::cout << "t2b: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t2b.get_d() << "\t";
-		std::cout << "t3b: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t3b.get_d() << std::endl;
-		std::cout << "tq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tq.get_d() << "\t";
-		std::cout << "t1c: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t1c.get_d() << "\t";
-		std::cout << "t2c: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t2c.get_d() << "\t";
-		std::cout << "t3c: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << t3c.get_d() << std::endl;
+		std::cout << "qq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << qq.get_d() << "\t";
+		std::cout << "tb1: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tb1.get_d() << "\t";
+		std::cout << "tb2: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tb2.get_d() << "\t";
+		std::cout << "tb3: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tb3.get_d() << std::endl;
+		std::cout << "qq: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << qq.get_d() << "\t";
+		std::cout << "tc1: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tc1.get_d() << "\t";
+		std::cout << "tc2: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tc2.get_d() << "\t";
+		std::cout << "tc3: " << std::scientific << std::setfill(' ') << std::scientific << std::setw(10) << std::setprecision(3) << tc3.get_d() << std::endl;
 #endif
 
-		if ( (t1c < 0) || (t2b <= t1b && t2c <= t1c) ) { t1c = t2c; t1b = t2b;}
-		if (t3b <= t1b && t3c <= t1c && t3b >= 0 && t3c >= 0) {t1b = t3b; t1c = t3c;}
-		if (t1b < 0 || t1c < 0) {*status=status_runtime_error; return; }
+		if ( (tc1 < 0) || (tb2 <= tb1 && tc2 <= tc1) ) { tc1 = tc2; tb1 = tb2;}
+		if (tb3 <= tb1 && tc3 <= tc1 && tb3 >= 0 && tc3 >= 0) {tb1 = tb3; tc1 = tc3;}
+		if (tb1 < 0 || tc1 < 0) {*status=status_runtime_error; return; }
 
-		bx += t1b*ebx;
-		by += t1b*eby;
-		bt += t1b;
-		cx += t1c*ecx;
-		cy += t1c*ecy;
-		ct += t1c;
-		nx = cy - by;
-		ny = bx - cx;
+		bx += tb1*ebx;
+		by += tb1*eby;
+		bt += tb1;
+		cx += tc1*ecx;
+		cy += tc1*ecy;
+		ct += tc1;
+		//nx = cy - by;
+		//ny = bx - cx;
 	    }
 	}
 
