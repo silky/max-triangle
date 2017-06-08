@@ -53,7 +53,7 @@ namespace InscribedTriangle {
 	if (!is_convex(polygon)) { *status = status_not_convex; return;  }
 	*status = status_ok;
 
-	bi = 0;
+	bi = ret[0];
 	ci = bi+1;
 	ai = bi+2;
 	bt = 0;
