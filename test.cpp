@@ -13,7 +13,7 @@ bool test_max() {
     std::ifstream infile("test-polygons");
 
     unsigned int ret[3];
-    state_flag status;
+    InscribedTriangle::state_flag status;
 
     while (std::getline(infile, line)) {
 	std::stringstream line_stream(line);
@@ -24,8 +24,8 @@ bool test_max() {
     }
 
     for (i = 0; i < polygons.size(); i++) {
-	maximum_triangle(polygons[i], ret, &status);
-	if (status != status_ok) {
+	InscribedTriangle::maximum_triangle(polygons[i], ret, &status);
+	if (status != InscribedTriangle::status_ok) {
 	    std::cout << i << " ";
 	    print_status(status);
 	    return false;
@@ -37,7 +37,7 @@ bool test_max() {
 	cx = polygons[i][2*ret[2]+0];
 	cy = polygons[i][2*ret[2]+1];
 	z1 = (bx-ax)*(cy-ay) - (cx-ax)*(by-ay);
-	brute_force_maximum_triangle(polygons[i], ret, &status);
+	InscribedTriangle::brute_force_maximum_triangle(polygons[i], ret, &status);
     	ax = polygons[i][2*ret[0]+0];
 	ay = polygons[i][2*ret[0]+1];
 	bx = polygons[i][2*ret[1]+0];
