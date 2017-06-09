@@ -1,6 +1,19 @@
-#include <string>
 #include <fstream>
+#include <sstream>
+#include <iostream>
+#include <string>
 #include "max-triangle.hpp"
+
+void print_status(InscribedTriangle::state_flag status) {
+    switch(status) {
+	case InscribedTriangle::status_ok: std::cout << "status_ok" << std::endl; break;
+	case InscribedTriangle::status_not_convex: std::cout << "status_not_convex" << std::endl; break;
+	case InscribedTriangle::status_no_interior: std::cout << "status_no_interior" << std::endl; break;
+	case InscribedTriangle::status_runtime_error: std::cout << "status_runtime_error" << std::endl; break;
+	case InscribedTriangle::status_max_not_at_vertex: std::cout << "status_max_not_at_vertex" << std::endl; break;
+	case InscribedTriangle::status_maxiter_exceeded: std::cout << "status_maxiter_exceeded" << std::endl; break;
+    }
+}
 
 bool test_max() {
     std::vector <std::vector <mpq_class> > polygons;
@@ -55,8 +68,8 @@ bool test_max() {
 }
 
 int main(int argc, char *argv[]){
-    if (test_max()) std::cout << "maximum triangle finding unit test PASSED" << std::endl;
-    else std::cout << "maximum triangle finding unit test FAILED" << std::endl;
+    if (test_max()) std::cout << "all tests PASSED" << std::endl;
+    else std::cout << " <-- FAILED" << std::endl;
     return 0;
 }
 
