@@ -1,2 +1,3 @@
-# max-triangle
-A linear-time algorithm for finding the maximum-area triangle inscribed in a convex polygon
+An implementation the algortihm described in the manuscript "A linear-time algorithm for the maximum-area inscribed triangle in a convex polygon" by Yoav Kallus available on arXiv.
+
+This implementation uses the GNU Multiple Precision Arithmetic library (GMP) and requires this libraries for compilation.
